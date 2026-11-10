@@ -75,7 +75,7 @@ public class MercadoPagoGateway implements PagamentoGateway {
 		if (prior.totalCentavos() != amount)
 			throw new IllegalArgumentException("REFUND_AMOUNT_MISMATCH");
 		http.post()
-			.uri("/v1/orders/{id}/refunds", safeId(id))
+			.uri("/v1/orders/{id}/refund", safeId(id))
 			.header("X-Idempotency-Key", operationId.toString())
 			.retrieve()
 			.toBodilessEntity();

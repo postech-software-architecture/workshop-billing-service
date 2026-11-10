@@ -2,7 +2,7 @@
 
 Projeto independente Java 21 / Spring Boot 3.4.1 da entrega SOAT 4. Implementação local concluída até a preparação da fase 5 em 07/11/2026.
 
-Verificação final: 102 testes, 1 cenário BDD, cobertura de linhas 82.11%, cobertura de instruções 85.01%, gate mínimo de 80% de linhas aprovado e SpotBugs alto sem achados.
+Verificação final: 103 testes, 1 cenário BDD, cobertura de linhas 83.92%, cobertura de instruções 86.43%, gate mínimo de 80% de linhas aprovado e SpotBugs alto sem achados.
 
 ```text
 mvn -B -Pquality clean verify
@@ -10,7 +10,7 @@ mvn -B -Pquality clean verify
 
 Contratos: [HTTP](contracts/openapi.json) e [mensagens](contracts/mensagens.schema.json). Infraestrutura da aplicação em `k8s/`; pipeline independente em `.github/workflows`. Variáveis em `src/main/resources/application.properties`; nomes de secrets em `k8s/secret.env.example`. Não versionar os valores reais.
 
-Testes de contexto usam H2 e não substituem migrations/concorrência PostgreSQL. Docker e cloud não foram iniciados/aplicados. Conta Mercado Pago, SMTP, deploy, publicação, proteção e provas integradas continuam pendentes. O pipeline remoto só será comprovado após publicação e execução.
+Testes de contexto usam H2 e não substituem migrations/concorrência PostgreSQL. Integração local verificada em 10/11/2026: Compose (PostgreSQL, MongoDB, RabbitMQ, OTel) e os overlays Academy aplicados num k3s local, com BDD completo da plataforma até ENTREGUE e compensações (estorno, recusa, expiração e cancelamento) concluídas em COMPENSADA. O Mercado Pago foi substituído pelo mock da Orders API em workshop-infra-platform/integracao; conta de teste real, SMTP e deploy no Academy continuam pendentes. A main é protegida por ruleset (PR, check verify obrigatório, sem force push/deleção).
 
 A distribuição completa contém a documentação de arquitetura/Saga, roteiros de aceite e inventário de hashes em `outputs/entrega-fase-4`.
 
@@ -24,7 +24,7 @@ Adotamos **Saga orquestrada em OS**, que já acompanha o atendimento e concentra
 - [Cobertura JaCoCo](docs/evidencias/jacoco.csv)
 - [Análise SpotBugs](docs/evidencias/spotbugs.xml)
 
-Esses arquivos registram a nova execução local de 07/11/2026 após as correções da auditoria, com comparação do contrato gerado aprovada. O CI publica relatórios atuais no artifact reports. Não são prova de integração real. A métrica de cobertura é LINE; exclusões de DTOs, mapeamento JPA e implementações MapStruct geradas estão explícitas no pom.xml.
+Esses arquivos registram a execução local de 10/11/2026, com comparação do contrato gerado aprovada. O CI publica relatórios atuais no artifact reports. Não são prova de integração real. A métrica de cobertura é LINE; exclusões de DTOs, mapeamento JPA e implementações MapStruct geradas estão explícitas no pom.xml.
 
 ## Atualização dos contratos HTTP
 

@@ -7,13 +7,6 @@
     "skipped": 0
   },
   {
-    "name": "com.postech.foundation.bdd.BehaviorTest",
-    "tests": 1,
-    "failures": 0,
-    "errors": 0,
-    "skipped": 0
-  },
-  {
     "name": "com.postech.foundation.BillingTest",
     "tests": 5,
     "failures": 0,
@@ -71,7 +64,7 @@
   },
   {
     "name": "com.postech.foundation.MercadoPagoGatewayTest",
-    "tests": 2,
+    "tests": 3,
     "failures": 0,
     "errors": 0,
     "skipped": 0
@@ -135,6 +128,13 @@
   {
     "name": "com.postech.foundation.TransportTest",
     "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "com.postech.foundation.bdd.BehaviorTest",
+    "tests": 1,
     "failures": 0,
     "errors": 0,
     "skipped": 0
