@@ -54,7 +54,7 @@ final class MessageContract {
 		throw new IllegalArgumentException("UNSUPPORTED_MESSAGE");
 	}
 
-	private static void check(JsonNode rule, JsonNode value) {
+	static void check(JsonNode rule, JsonNode value) {
 		boolean valid = switch (rule.path("type").asText()) {
 			case "object" -> value.isObject();
 			case "array" -> value.isArray();
@@ -101,14 +101,23 @@ final class MessageContract {
 				if (!UUID.fromString(text).toString().equalsIgnoreCase(text))
 					fail();
 			}
-			if (rule.path("format").asText().equals("date-time"))
-				Instant.parse(text);
+			if (rule.path("format").asText().equals("date-time") && !isInstant(text))
+				fail();
 		}
 		else if (value.isNumber()) {
 			if (rule.has("minimum") && value.decimalValue().compareTo(rule.get("minimum").decimalValue()) < 0)
 				fail();
 			if (rule.has("maximum") && value.decimalValue().compareTo(rule.get("maximum").decimalValue()) > 0)
 				fail();
+		}
+	}
+
+	private static boolean isInstant(String text) {
+		try {
+			return Instant.parse(text) != null;
+		}
+		catch (java.time.format.DateTimeParseException invalid) {
+			return false; // permanent contract violation, not a transient failure to retry
 		}
 	}
 

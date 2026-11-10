@@ -2,7 +2,7 @@
 
 Projeto independente Java 21 / Spring Boot 3.4.1 da entrega SOAT 4. Implementação local concluída até a preparação da fase 5 em 07/11/2026.
 
-Verificação final: 103 testes, 1 cenário BDD, cobertura de linhas 83.92%, cobertura de instruções 86.43%, gate mínimo de 80% de linhas aprovado e SpotBugs alto sem achados.
+Verificação final: 104 testes, 1 cenário BDD, cobertura de linhas 83.97%, cobertura de instruções 86.48%, gate mínimo de 80% de linhas aprovado, SpotBugs alto sem achados e quality gate do SonarQube aprovado em análise local (0 bugs/vulnerabilidades, ratings A).
 
 ```text
 mvn -B -Pquality clean verify

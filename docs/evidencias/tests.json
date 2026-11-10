@@ -70,6 +70,13 @@
     "skipped": 0
   },
   {
+    "name": "com.postech.foundation.MessageContractFormatTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
     "name": "com.postech.foundation.MessageContractMatrixTest",
     "tests": 29,
     "failures": 0,

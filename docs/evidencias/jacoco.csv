@@ -6,7 +6,7 @@ workshop-billing-service,com.postech.foundation,TraceHeaders,17,14,3,1,2,6,2,2,0
 workshop-billing-service,com.postech.foundation,Errors,22,15,1,1,3,3,4,2,3,2
 workshop-billing-service,com.postech.foundation,Budget,5,66,1,5,1,7,1,4,0,2
 workshop-billing-service,com.postech.foundation,Budget.State,0,27,0,0,0,2,0,1,0,1
-workshop-billing-service,com.postech.foundation,MessageContract,25,417,10,66,15,58,10,37,0,6
+workshop-billing-service,com.postech.foundation,MessageContract,24,429,10,70,15,61,10,40,0,7
 workshop-billing-service,com.postech.foundation,SmtpBudgetNotifier.Contact,0,6,0,0,0,1,0,1,0,1
 workshop-billing-service,com.postech.foundation,Billing,261,464,36,30,39,71,28,18,2,10
 workshop-billing-service,com.postech.foundation,PagamentoGateway.Charge,0,24,0,0,0,1,0,1,0,1
