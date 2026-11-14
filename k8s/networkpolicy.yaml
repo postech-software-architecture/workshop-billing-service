@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: billing-service}
+spec:
+  podSelector: {matchLabels: {app: billing-service}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ingress-nginx}}
+        - podSelector: {matchLabels: {app: billing-service}}
+        - podSelector: {matchLabels: {app: execucao-service}}
+        - ipBlock: {cidr: 10.0.0.0/8}
+      ports: [{protocol: TCP, port: 8080}]
+  egress:
+    - to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}}]
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to: [{"podSelector": {"matchLabels": {"app": "billing-db"}}}]
+      ports: [{"protocol": "TCP", "port": 5432}]
+    - to: [{"podSelector": {"matchLabels": {"app": "rabbit"}}}]
+      ports: [{"protocol": "TCP", "port": 5672}]
+    - to: [{"podSelector": {"matchLabels": {"app": "otel"}}}]
+      ports: [{"protocol": "TCP", "port": 4318}]
+    - to: [{"podSelector": {"matchLabels": {"app": "os-service"}}}]
+      ports: [{"protocol": "TCP", "port": 8080}]
+    - to: [{ipBlock: {cidr: 0.0.0.0/0, except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]}}]
+      ports: [{protocol: TCP, port: 443}, {protocol: TCP, port: 465}, {protocol: TCP, port: 587}]

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: billing-service-settings}
+data:
+  RABBIT_HOST: rabbit
+  RABBIT_USER: billing-service
+  IDENTITY_URL: http://os-service:8080
+  OTEL_ENDPOINT: http://otel:4318/v1/traces
+  PAYMENTS_ENABLED: "false"
+  NOTIFICATIONS_ENABLED: "false"
+  OTEL_METRICS_ENDPOINT: http://otel:4318/v1/metrics

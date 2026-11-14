@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: billing-service}
+  template:
+    metadata:
+      labels: {app: billing-service}
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets: [{name: ghcr-pull}]
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001}
+      containers:
+        - name: app
+          image: workshop-billing-service:REPLACE_WITH_COMMIT
+          ports: [{containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: billing-service-settings}
+            - secretRef: {name: billing-service-config}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+          startupProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8080}
+            failureThreshold: 40
+            periodSeconds: 3
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: 8080}
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8080}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: '1', memory: 640Mi}
+      volumes: [{name: tmp, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: billing-service}
+spec:
+  selector: {app: billing-service}
+  ports: [{port: 8080, targetPort: 8080}]

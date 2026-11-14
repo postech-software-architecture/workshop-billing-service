@@ -1,0 +1,1170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Contratos candidatos Fase 4 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "messageId",
+    "messageType",
+    "schemaVersion",
+    "occurredAt",
+    "producer",
+    "osId",
+    "sagaId",
+    "attemptId",
+    "correlationId",
+    "causationId",
+    "aggregateId",
+    "aggregateVersion",
+    "payload"
+  ],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "messageType": {
+      "enum": [
+        "execucao.solicitar-diagnostico.v1",
+        "execucao.diagnostico-admitido.v1",
+        "execucao.diagnostico-iniciado.v1",
+        "execucao.diagnostico-concluido.v1",
+        "billing.gerar-orcamento.v1",
+        "billing.orcamento-gerado.v1",
+        "billing.geracao-orcamento-falhou.v1",
+        "billing.orcamento-aprovado.v1",
+        "billing.orcamento-rejeitado.v1",
+        "billing.criar-cobranca.v1",
+        "billing.pagamento-confirmado.v1",
+        "billing.pagamento-recusado.v1",
+        "billing.pagamento-expirado.v1",
+        "execucao.enfileirar-reparo.v1",
+        "execucao.reparo-enfileirado.v1",
+        "execucao.enfileiramento-recusado.v1",
+        "execucao.cancelar-trabalho.v1",
+        "execucao.trabalho-cancelado.v1",
+        "execucao.cancelamento-recusado.v1",
+        "billing.cancelar-cobranca.v1",
+        "billing.estornar-pagamento.v1",
+        "billing.cobranca-cancelada.v1",
+        "billing.pagamento-estornado.v1",
+        "billing.compensacao-financeira-pendente.v1",
+        "billing.cancelar-orcamento.v1",
+        "billing.orcamento-cancelado.v1",
+        "execucao.reparo-iniciado.v1",
+        "execucao.reparo-concluido.v1",
+        "billing.cobranca-nao-criada.v1"
+      ]
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "enum": [
+        "os-service",
+        "billing-service",
+        "execucao-service"
+      ]
+    },
+    "osId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sagaId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "attemptId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "aggregateId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "aggregateVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.solicitar-diagnostico.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId",
+            "solicitacao"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "solicitacao": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.diagnostico-admitido.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.diagnostico-iniciado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.diagnostico-concluido.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId",
+            "diagnostico"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "diagnostico": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.gerar-orcamento.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "clienteId",
+            "itens",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "clienteId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "itens": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "itemId",
+                  "tipo",
+                  "descricao",
+                  "quantidade",
+                  "valorUnitarioCentavos",
+                  "totalCentavos"
+                ],
+                "properties": {
+                  "itemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "SERVICO",
+                      "PECA",
+                      "INSUMO"
+                    ]
+                  },
+                  "descricao": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "quantidade": {
+                    "type": "string",
+                    "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+                    "maxLength": 64
+                  },
+                  "valorUnitarioCentavos": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "totalCentavos": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                }
+              }
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.orcamento-gerado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.geracao-orcamento-falhou.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operationId",
+            "codigo",
+            "retriavel"
+          ],
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "codigo": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "retriavel": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.orcamento-aprovado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.orcamento-rejeitado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.criar-cobranca.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "operationId",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.pagamento-confirmado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "providerOrderId",
+            "externalReference",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "providerOrderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "externalReference": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.pagamento-recusado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "providerOrderId",
+            "externalReference",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "providerOrderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "externalReference": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.pagamento-expirado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "providerOrderId",
+            "externalReference",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "providerOrderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "externalReference": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.enfileirar-reparo.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId",
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "itensAutorizados"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "itensAutorizados": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "itemId",
+                  "tipo",
+                  "descricao"
+                ],
+                "properties": {
+                  "itemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "tipo": {
+                    "enum": [
+                      "SERVICO",
+                      "PECA",
+                      "INSUMO"
+                    ]
+                  },
+                  "descricao": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.reparo-enfileirado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.enfileiramento-recusado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId",
+            "operationId",
+            "codigo",
+            "retriavel"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "codigo": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "retriavel": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.cancelar-trabalho.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.trabalho-cancelado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.cancelamento-recusado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId",
+            "codigo"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "codigo": {
+              "const": "REPARO_JA_INICIADO"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.cancelar-cobranca.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operationId",
+            "pagamentoId"
+          ],
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.estornar-pagamento.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operationId",
+            "pagamentoId"
+          ],
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.cobranca-cancelada.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "providerOrderId",
+            "externalReference",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "providerOrderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "externalReference": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.pagamento-estornado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao",
+            "pagamentoId",
+            "providerOrderId",
+            "externalReference",
+            "totalCentavos",
+            "moeda"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "providerOrderId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "externalReference": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$"
+            },
+            "totalCentavos": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "moeda": {
+              "const": "BRL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.compensacao-financeira-pendente.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pagamentoId",
+            "operationId",
+            "codigo",
+            "retriavel"
+          ],
+          "properties": {
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "codigo": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "retriavel": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.cancelar-orcamento.v1"
+        },
+        "producer": {
+          "const": "os-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.orcamento-cancelado.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "orcamentoId",
+            "orcamentoVersao"
+          ],
+          "properties": {
+            "orcamentoId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "orcamentoVersao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.reparo-iniciado.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "execucao.reparo-concluido.v1"
+        },
+        "producer": {
+          "const": "execucao-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trabalhoId"
+          ],
+          "properties": {
+            "trabalhoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "messageType": {
+          "const": "billing.cobranca-nao-criada.v1"
+        },
+        "producer": {
+          "const": "billing-service"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operationId",
+            "pagamentoId"
+          ],
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "pagamentoId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
