@@ -6,6 +6,8 @@ import java.security.MessageDigest;
 import java.util.*;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PaymentWebhook {
+
+	private static final Logger LOG = LoggerFactory.getLogger(PaymentWebhook.class);
 
 	private final JdbcTemplate db;
 
@@ -32,20 +36,26 @@ public class PaymentWebhook {
 	public void receive(String signature, String requestId, String resourceId, JsonNode body) {
 		if (secret.isBlank() || owner.isBlank() || application.isBlank())
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
-		if (!valid(signature, requestId, resourceId, secret) || body == null
-				|| !"order".equals(body.path("type").asText())
-				|| !resourceId.equals(body.path("data").path("id").asText())
-				|| !owner.equals(body.path("user_id").asText())
-				|| !application.equals(body.path("application_id").asText()))
+		boolean signed = valid(signature, requestId, resourceId, secret);
+		boolean context = body != null && "order".equals(body.path("type").asText())
+				&& Objects.equals(resourceId, body.path("data").path("id").asText())
+				&& owner.equals(body.path("user_id").asText())
+				&& application.equals(body.path("application_id").asText());
+		if (!signed || !context) {
+			LOG.warn("MP_WEBHOOK_REJECTED signature_valid={} context_valid={} signature_present={} request_id_present={}",
+					signed, context, signature != null && !signature.isBlank(), requestId != null && !requestId.isBlank());
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_NOTIFICATION");
+		}
 		// The dashboard simulator can send a generic live/Point body for an unrelated
 		// order. Authenticate it, then acknowledge untracked resources without effects.
 		boolean tracked = Boolean.TRUE.equals(db.queryForObject(
 				"SELECT EXISTS(SELECT 1 FROM payments WHERE provider_order_id=?)", Boolean.class, resourceId));
 		if (!tracked)
 			return;
-		if (!body.has("live_mode") || body.path("live_mode").asBoolean(true))
+		if (!body.has("live_mode") || body.path("live_mode").asBoolean(true)) {
+			LOG.warn("MP_WEBHOOK_REJECTED tracked_resource_requires_test_mode");
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_NOTIFICATION");
+		}
 		// The body never supplies financial truth. Wake a GET reconciliation of a known
 		// local resource.
 		String key = hexDigest(resourceId + "|" + requestId + "|" + signature);
