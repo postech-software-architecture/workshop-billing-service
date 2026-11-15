@@ -85,7 +85,10 @@ jobs:
       if: ${{ !inputs.publish_only }}
     - run: kubectl apply --dry-run=server -f /tmp/app.yaml
       if: ${{ !inputs.publish_only }}
-    - run: kubectl apply -f /tmp/app.yaml
+    - name: Apply settings and reload runtime configuration
+      run: |
+        kubectl apply -f /tmp/app.yaml
+        kubectl rollout restart -n workshop deployment/billing-service
       if: ${{ !inputs.publish_only }}
     - name: Verify rollout
       id: rollout
