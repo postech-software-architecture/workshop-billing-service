@@ -35,6 +35,44 @@ class BillingTest {
 	}
 
 	@Test
+	void sagaCancellationClosesConcurrentApprovalAndPreservesTheFirstDecision() {
+		when(db.update(startsWith("INSERT INTO inbox"), any(UUID.class))).thenReturn(1);
+		when(db.queryForList("SELECT id FROM budgets WHERE id=?", id)).thenReturn(List.of(Map.of("id", id)));
+		Budget approved = pending().decide(Budget.State.APROVADO);
+		when(db.query(startsWith("SELECT * FROM budgets"), org.mockito.ArgumentMatchers.<RowMapper<Budget>>any(),
+				eq(id))).thenReturn(List.of(approved));
+		Envelope command = new Envelope(UUID.randomUUID(), "billing.cancelar-orcamento.v1", 1, Instant.now(),
+				"os-service", os, saga, attempt, os, null, os, 2,
+				json.valueToTree(Map.of("orcamentoId", id, "orcamentoVersao", 1)));
+		billing.accept(command);
+		verify(db).update(startsWith("INSERT INTO budget_cancellations"), eq(id), eq(os), eq(attempt), eq(saga), eq(1));
+		verify(db).update(startsWith("UPDATE budgets SET state"), eq("CANCELADO"), eq(3L), eq(id));
+		verify(db).update(contains("INSERT INTO budget_decisions(budget_id,decision,actor) VALUES(?,?,?) ON CONFLICT DO NOTHING"),
+				eq(id), eq("CANCELADO"), eq("os-service"));
+		verify(messages).emit(argThat(e -> e.messageType().equals("billing.orcamento-cancelado.v1")
+				&& e.aggregateVersion() == 3), eq(false));
+		when(db.query(startsWith("SELECT * FROM budgets"), org.mockito.ArgumentMatchers.<RowMapper<Budget>>any(),
+				eq(id))).thenReturn(List.of(approved.cancelForCompensation()));
+		billing.accept(new Envelope(UUID.randomUUID(), command.messageType(), 1, Instant.now(), "os-service",
+				os, saga, attempt, os, null, os, 3, command.payload()));
+		verify(messages, times(1)).emit(any(Envelope.class), eq(false));
+	}
+
+	@Test
+	void cancellationFromAnotherSagaCannotCloseBudget() {
+		when(db.update(startsWith("INSERT INTO inbox"), any(UUID.class))).thenReturn(1);
+		when(db.queryForList("SELECT id FROM budgets WHERE id=?", id)).thenReturn(List.of(Map.of("id", id)));
+		when(db.query(startsWith("SELECT * FROM budgets"), org.mockito.ArgumentMatchers.<RowMapper<Budget>>any(),
+				eq(id))).thenReturn(List.of(pending()));
+		Envelope command = new Envelope(UUID.randomUUID(), "billing.cancelar-orcamento.v1", 1, Instant.now(),
+				"os-service", os, UUID.randomUUID(), attempt, os, null, os, 2,
+				json.valueToTree(Map.of("orcamentoId", id, "orcamentoVersao", 1)));
+		assertThrows(IllegalArgumentException.class, () -> billing.accept(command));
+		verifyNoInteractions(messages);
+		verify(db, never()).update(startsWith("UPDATE budgets"), anyString(), anyLong(), any(UUID.class));
+	}
+
+	@Test
 	void duplicateMessageStopsBeforeWritingProposal() {
 		billing.accept(generate());
 		verifyNoInteractions(messages);

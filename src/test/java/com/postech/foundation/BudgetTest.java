@@ -15,6 +15,18 @@ class BudgetTest {
 	}
 
 	@Test
+	void onlySagaCompensationCanCloseAProposalAfterApprovalWinsTheRace() {
+		Budget approved = pending().decide(Budget.State.APROVADO);
+		assertThrows(IllegalArgumentException.class, () -> approved.decide(Budget.State.CANCELADO));
+		Budget cancelled = approved.cancelForCompensation();
+		assertEquals(Budget.State.CANCELADO, cancelled.state());
+		assertEquals(approved.version() + 1, cancelled.version());
+		assertSame(approved.snapshot(), cancelled.snapshot());
+		assertSame(cancelled, cancelled.cancelForCompensation());
+		assertThrows(IllegalArgumentException.class, () -> cancelled.decide(Budget.State.APROVADO));
+	}
+
+	@Test
 	void approvalIsIdempotentAndCannotBeRejectedLater() {
 		var result = pending().decide(Budget.State.APROVADO);
 		assertSame(result, result.decide(Budget.State.APROVADO));
