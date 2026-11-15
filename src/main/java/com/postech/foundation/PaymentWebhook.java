@@ -36,8 +36,15 @@ public class PaymentWebhook {
 				|| !"order".equals(body.path("type").asText())
 				|| !resourceId.equals(body.path("data").path("id").asText())
 				|| !owner.equals(body.path("user_id").asText())
-				|| !application.equals(body.path("application_id").asText()) || !body.has("live_mode")
-				|| body.path("live_mode").asBoolean(true))
+				|| !application.equals(body.path("application_id").asText()))
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_NOTIFICATION");
+		// The dashboard simulator can send a generic live/Point body for an unrelated
+		// order. Authenticate it, then acknowledge untracked resources without effects.
+		boolean tracked = Boolean.TRUE.equals(db.queryForObject(
+				"SELECT EXISTS(SELECT 1 FROM payments WHERE provider_order_id=?)", Boolean.class, resourceId));
+		if (!tracked)
+			return;
+		if (!body.has("live_mode") || body.path("live_mode").asBoolean(true))
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_NOTIFICATION");
 		// The body never supplies financial truth. Wake a GET reconciliation of a known
 		// local resource.

@@ -30,6 +30,7 @@ class PaymentWebhookTest {
 	@Test
 	void validNotificationIsDurableButBodyNeverConfirmsPayment() throws Exception {
 		var db = mock(JdbcTemplate.class);
+		when(db.queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"))).thenReturn(true);
 		when(db.update(startsWith("INSERT INTO provider_notifications"), any(UUID.class), anyString(), eq("ORD1")))
 			.thenReturn(1);
 		var hook = new PaymentWebhook(db, "local-test-secret", "seller", "app");
@@ -38,6 +39,68 @@ class PaymentWebhookTest {
 				"{\"type\":\"order\",\"user_id\":\"seller\",\"application_id\":\"app\",\"live_mode\":false,\"data\":{\"id\":\"ORD1\",\"status\":\"processed\"}}"));
 		verify(db).update(startsWith("UPDATE financial_operations"), eq("ORD1"));
 		verify(db, never()).update(startsWith("UPDATE payments"), any(Object[].class));
+	}
+
+	@Test
+	void signedSimulatorBodyForUntrackedOrderIsAcknowledgedWithoutAnyWrite() throws Exception {
+		var db = mock(JdbcTemplate.class);
+		when(db.queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"))).thenReturn(false);
+		var hook = new PaymentWebhook(db, "local-test-secret", "seller", "app");
+		var body = new com.fasterxml.jackson.databind.ObjectMapper().readTree(
+				"{\"action\":\"order.processed\",\"type\":\"order\",\"user_id\":\"seller\",\"application_id\":\"app\",\"live_mode\":true,\"data\":{\"id\":\"ORD1\",\"type\":\"point\",\"status\":\"processed\",\"status_detail\":\"accredited\"}}");
+		hook.receive(signature, "req-123", "ORD1", body);
+		hook.receive(signature, "req-123", "ORD1", body);
+		verify(db, times(2)).queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"));
+		verifyNoMoreInteractions(db);
+	}
+
+	@Test
+	void trackedLiveNotificationIsStillRejectedWithoutWrites() throws Exception {
+		var db = mock(JdbcTemplate.class);
+		when(db.queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"))).thenReturn(true);
+		var hook = new PaymentWebhook(db, "local-test-secret", "seller", "app");
+		var body = new com.fasterxml.jackson.databind.ObjectMapper().readTree(
+				"{\"type\":\"order\",\"user_id\":\"seller\",\"application_id\":\"app\",\"live_mode\":true,\"data\":{\"id\":\"ORD1\"}}");
+		var error = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+				() -> hook.receive(signature, "req-123", "ORD1", body));
+		assertEquals(401, error.getStatusCode().value());
+		verify(db).queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"));
+		verifyNoMoreInteractions(db);
+	}
+
+	@Test
+	void trackedNotificationWithMissingModeIsStillRejected() throws Exception {
+		var db = mock(JdbcTemplate.class);
+		when(db.queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"))).thenReturn(true);
+		var hook = new PaymentWebhook(db, "local-test-secret", "seller", "app");
+		var body = new com.fasterxml.jackson.databind.ObjectMapper().readTree(
+				"{\"type\":\"order\",\"user_id\":\"seller\",\"application_id\":\"app\",\"data\":{\"id\":\"ORD1\"}}");
+		assertThrows(org.springframework.web.server.ResponseStatusException.class,
+				() -> hook.receive(signature, "req-123", "ORD1", body));
+		verify(db).queryForObject(startsWith("SELECT EXISTS"), eq(Boolean.class), eq("ORD1"));
+		verifyNoMoreInteractions(db);
+	}
+
+	@Test
+	void untrackedResourceDoesNotBypassSignatureOrContextChecks() throws Exception {
+		var db = mock(JdbcTemplate.class);
+		var hook = new PaymentWebhook(db, "local-test-secret", "seller", "app");
+		var json = new com.fasterxml.jackson.databind.ObjectMapper();
+		var valid = json.readTree(
+				"{\"type\":\"order\",\"user_id\":\"seller\",\"application_id\":\"app\",\"live_mode\":true,\"data\":{\"id\":\"ORD1\"}}");
+		assertThrows(org.springframework.web.server.ResponseStatusException.class,
+				() -> hook.receive(null, "req-123", "ORD1", valid));
+		for (String field : List.of("type", "user_id", "application_id")) {
+			var wrong = valid.deepCopy();
+			((com.fasterxml.jackson.databind.node.ObjectNode) wrong).put(field, "other");
+			assertThrows(org.springframework.web.server.ResponseStatusException.class,
+					() -> hook.receive(signature, "req-123", "ORD1", wrong));
+		}
+		var wrongId = valid.deepCopy();
+		((com.fasterxml.jackson.databind.node.ObjectNode) wrongId.path("data")).put("id", "OTHER");
+		assertThrows(org.springframework.web.server.ResponseStatusException.class,
+				() -> hook.receive(signature, "req-123", "ORD1", wrongId));
+		verifyNoInteractions(db);
 	}
 
 	@Test
