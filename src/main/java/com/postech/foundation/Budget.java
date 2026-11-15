@@ -19,4 +19,10 @@ public record Budget(UUID id, UUID osId, UUID attemptId, UUID sagaId, UUID corre
 			throw new IllegalArgumentException("BUDGET_ALREADY_DECIDED");
 		return new Budget(id, osId, attemptId, sagaId, correlationId, snapshot, decision, version + 1);
 	}
+
+	/** The owning Saga can close a proposal even if a customer decision raced it. */
+	Budget cancelForCompensation() {
+		return state == State.CANCELADO ? this
+				: new Budget(id, osId, attemptId, sagaId, correlationId, snapshot, State.CANCELADO, version + 1);
+	}
 }

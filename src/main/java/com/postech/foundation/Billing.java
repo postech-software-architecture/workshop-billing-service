@@ -71,7 +71,11 @@ public class Billing implements Handler {
 					|| !budget.sagaId().equals(e.sagaId())
 					|| budget.snapshot().orcamentoVersao() != e.payload().path("orcamentoVersao").asInt())
 				throw new IllegalArgumentException("BUDGET_CONTEXT_MISMATCH");
-			saveDecision(budget, Budget.State.CANCELADO, e.messageId(), "os-service");
+			// Preserve the original customer decision; cancellation has its own durable record.
+			db.update(
+					"INSERT INTO budget_cancellations(id,os_id,attempt_id,saga_id,budget_version) VALUES(?,?,?,?,?) ON CONFLICT DO NOTHING",
+					id, e.osId(), e.attemptId(), e.sagaId(), budget.snapshot().orcamentoVersao());
+			saveDecision(budget, budget.cancelForCompensation(), e.messageId(), "os-service");
 			return;
 		}
 		BudgetSnapshot snapshot = BudgetSnapshot.read(e.payload(), json);
@@ -136,14 +140,17 @@ public class Billing implements Handler {
 	}
 
 	private Budget saveDecision(Budget prior, Budget.State decision, UUID cause, String actor) {
-		Budget next = prior.decide(decision);
+		return saveDecision(prior, prior.decide(decision), cause, actor);
+	}
+
+	private Budget saveDecision(Budget prior, Budget next, UUID cause, String actor) {
 		if (next == prior)
 			return prior;
 		db.update("UPDATE budgets SET state=?,version=?,decided_at=now() WHERE id=?", next.state().name(),
 				next.version(), next.id());
-		db.update("INSERT INTO budget_decisions(budget_id,decision,actor) VALUES(?,?,?)", next.id(),
+		db.update("INSERT INTO budget_decisions(budget_id,decision,actor) VALUES(?,?,?) ON CONFLICT DO NOTHING", next.id(),
 				next.state().name(), actor);
-		String suffix = switch (decision) {
+		String suffix = switch (next.state()) {
 			case APROVADO -> "aprovado";
 			case REJEITADO -> "rejeitado";
 			case CANCELADO -> "cancelado";
