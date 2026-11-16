@@ -2,10 +2,14 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Workshop billing",
-    "version": "fase-4-local",
-    "description": "Rotas geradas dos controllers; seguranca e prefixo local documentados na publicacao."
+    "version": "fase-4-academy",
+    "description": "Contrato gerado dos controllers; rotas internas exigem credencial técnica. API pública e gateway Compose têm bases distintas."
   },
   "servers": [
+    {
+      "url": "https://rnwyojgeaa.execute-api.us-east-1.amazonaws.com/prod",
+      "description": "API pública AWS Academy; somente rotas publicadas no gateway"
+    },
     {
       "url": "/billing",
       "description": "Gateway local"
