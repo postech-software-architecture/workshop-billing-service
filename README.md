@@ -1,39 +1,51 @@
 # workshop-billing-service
 
-Projeto independente Java 21 / Spring Boot 3.4.1 da entrega SOAT 4. Implementação local concluída até a preparação da fase 5 em 07/11/2026.
+**Orçamentos e pagamentos — SOAT Fase 4.** Java 21 / Spring Boot 3.4.1. Persistência: PostgreSQL lógico exclusivo no RDS. Cada serviço mantém repositório, contratos, transação local e pipeline de implantação próprios.
 
-Verificação final: 104 testes, 1 cenário BDD, cobertura de linhas 83.97%, cobertura de instruções 86.48%, gate mínimo de 80% de linhas aprovado, SpotBugs alto sem achados e quality gate do SonarQube aprovado em análise local (0 bugs/vulnerabilidades, ratings A).
+## Versão validada e qualidade
+
+Auditoria de 15/11/2026, baseada nos artifacts do CI da imagem efetivamente implantada, não em contagens locais antigas.
+
+| Evidência | Resultado |
+|---|---|
+| Commit da imagem implantada | `b34c55057797de8b5f8a64e63c69074494bf4c64` |
+| Testes Maven | 111; 0 falhas, erros ou skips |
+| Cobertura de linhas | **85.43%**; gate LINE ≥80% aprovado |
+| Cobertura de instruções / branches | 88.05% / 69.92% |
+| Qualidade estática | SpotBugs no CI, sem achados no relatório; threshold High |
+| CI e imagem | [Execução aprovada](https://github.com/postech-software-architecture/workshop-billing-service/actions/runs/43773150621) |
+| Deploy Kubernetes | [Build, testes, publicação, apply e rollout aprovados](https://github.com/postech-software-architecture/workshop-billing-service/actions/runs/43774200032) |
+
+[Resumo e contadores verificados](docs/evidencias/qualidade-ci.json), [CSV JaCoCo](docs/evidencias/jacoco-ci.csv), [arquitetura do serviço](docs/ARQUITETURA.md) e [dossiê da Fase 4](https://github.com/postech-software-architecture/soat-architecture/blob/main/docs/architecture/fase4/README.md). As exclusões de cobertura de DTOs/mapeamentos/MapStruct estão no pom e no resumo; domínio, Saga, mensageria e gateway permanecem no escopo. Testes de contexto não substituem a validação integrada com os bancos reais.
+
+## Comportamento comprovado no Academy
+
+- OS 09: pagamento de teste confirmado, reparo concluído e entrega idempotente.
+- OS 10: cancelamento antes do reparo, estorno confirmado no Mercado Pago e devolução única de estoque.
+- OS 06: falha histórica por prazo financeiro excedido, 19 retries e compensação automática.
+- [BDD completo real](https://github.com/postech-software-architecture/workshop-infra-platform/actions/runs/43780849850): 1 cenário/5 passos, dry-run=false, OS 11 ENTREGUE após compra de teste. O BDD por serviço faz parte da suíte Maven; este cenário integrado tem relatório próprio.
+- [Traces, logs e métricas](https://github.com/postech-software-architecture/soat-architecture/blob/main/docs/architecture/fase4/OBSERVABILIDADE.md) coletados dos três serviços. A fragmentação do trace de ensaio e a correlação de logs ainda não demonstrada estão documentadas.
+
+## API e contratos
+
+Contrato canônico [OpenAPI](contracts/openapi.json), [cópia compatível](openapi.json) e [mensagens](contracts/mensagens.schema.json). Na API pública, a base é `https://rnwyojgeaa.execute-api.us-east-1.amazonaws.com/prod` e as rotas deste domínio começam em `/api/v1/orcamentos e /api/v1/pagamentos`. O gateway público usa `/api/v1`; `/os`, `/billing` e `/execution` são prefixos opcionais do gateway Compose.
+
+Login de equipe: `POST /api/auth/login`; cliente: `POST /api/auth/cpf`, ambos no Auth público. Enviar o JWT emitido na autenticação. Rotas internas descritas pelo serviço exigem credencial técnica e não são publicadas integralmente no API Gateway. Não colocar tokens/senhas nos exemplos compartilhados.
+
+As collections Postman e o environment privado ficam locais por decisão do solicitante. O OpenAPI versionado atende à documentação pública dos contratos. ApplicationWiringTest confere paths/components gerados e igualdade das duas cópias; metadata de servers distingue Academy e Compose.
+
+## Build e implantação
 
 ```text
 mvn -B -Pquality clean verify
 ```
 
-Contratos: [HTTP](contracts/openapi.json) e [mensagens](contracts/mensagens.schema.json). Infraestrutura da aplicação em `k8s/`; pipeline independente em `.github/workflows`. Variáveis em `src/main/resources/application.properties`; nomes de secrets em `k8s/secret.env.example`. Não versionar os valores reais.
+[CI](.github/workflows/ci.yml) executa testes, JaCoCo, SpotBugs e build Docker no GitHub. [Deploy](.github/workflows/deploy.yml) é independente: disparo manual em main (`workflow_dispatch`), Environment prod, imagem GHCR por SHA, testes antes da publicação, validação no servidor Kubernetes, apply e rollout automáticos. Falha de rollout aciona rollback. Uma alteração exclusivamente documental não exige reimplantar a imagem validada.
 
-Testes de contexto usam H2 e não substituem migrations/concorrência PostgreSQL. Integração local verificada em 10/11/2026: Compose (PostgreSQL, MongoDB, RabbitMQ, OTel) e os overlays Academy aplicados num k3s local, com BDD completo da plataforma até ENTREGUE e compensações (estorno, recusa, expiração e cancelamento) concluídas em COMPENSADA. O Mercado Pago foi substituído pelo mock da Orders API em workshop-infra-platform/integracao; conta de teste real, SMTP e deploy no Academy continuam pendentes. A main é protegida por ruleset (PR, check verify obrigatório, sem force push/deleção).
+Main exige PR e check verify atualizado, bloqueia force push/deleção e não tem atores de bypass no ruleset. Atualmente exige **0 aprovações humanas**, conforme configuração adotada para permitir concluir PRs sem esperar outro participante. O Environment prod existe; nos três microserviços não há reviewer obrigatório configurado. Não confundir existência do Environment com aprovação humana obrigatória.
 
-A distribuição completa contém a documentação de arquitetura/Saga, roteiros de aceite e inventário de hashes em `outputs/entrega-fase-4`.
+## Operação no AWS Academy
 
-## Arquitetura e estratégia da Saga
+Credenciais temporárias AWS são centralizadas na organização e precisam de renovação por sessão. Segredos de runtime ficam na plataforma; [guia de centralização](https://github.com/postech-software-architecture/workshop-infra-platform/blob/main/docs/SECRETS.md). A infraestrutura usa a LabRole existente, sem criar IAM/OIDC para contornar restrições. Os renderers Academy em scripts devem ser usados; não aplicar placeholders genéricos diretamente.
 
-Adotamos **Saga orquestrada em OS**, que já acompanha o atendimento e concentra estado global, prazos e decisões de compensação. Isso torna a recuperação rastreável; cada participante conserva suas regras e transação local. A dependência do coordenador é tratada com estado persistido, outbox, retries e retomada administrativa. Veja [arquitetura, tecnologias e limites](docs/ARQUITETURA.md).
-
-## Evidências acessíveis neste repositório
-
-- [Testes locais registrados](docs/evidencias/tests.json)
-- [Cobertura JaCoCo](docs/evidencias/jacoco.csv)
-- [Análise SpotBugs](docs/evidencias/spotbugs.xml)
-
-Esses arquivos registram a execução local de 10/11/2026, com comparação do contrato gerado aprovada. O CI publica relatórios atuais no artifact reports. Não são prova de integração real. A métrica de cobertura é LINE; exclusões de DTOs, mapeamento JPA e implementações MapStruct geradas estão explícitas no pom.xml.
-
-## Atualização dos contratos HTTP
-
-`contracts/openapi.json` é o contrato canônico; `openapi.json` é uma cópia de compatibilidade idêntica. ApplicationWiringTest consulta /v3/api-docs e bloqueia divergência de paths/components e da cópia. Metadata/servers documentam os prefixos do gateway local e podem diferir do endpoint interno.
-
-Depois de alterar controllers/DTOs: rode o teste gerador, use target/openapi-phase3.json para atualizar paths/components do contrato, replique o canônico na raiz e rode novamente `mvn -B -Pquality verify`. Os testes não atualizam snapshots silenciosamente. Em produção, /v3/api-docs é relativo à aplicação; os prefixos /os, /billing e /execution são do gateway Compose.
-
-## Adequação Academy em 09/11/2026
-
-Deploy usa AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN, Environment prod e cluster existente. Não cria role nem usa OIDC. O renderer em scripts/render-academy.py preenche a imagem por SHA e egress privado SQL; RDS_HOST vem de Variable do Environment. Usar a configuração da plataforma antes do deploy. O corte de borda é explícito no repo auth.
-
-OS/Billing usam bancos lógicos e usuários próprios no RDS existente; Execução usa Mongo no cluster. Não substituir a infraestrutura anterior ou seus states. Os arquivos genéricos de rede em k8s/base são base de composição; o renderer Academy substitui a política SQL pelos /32 privados resolvidos. Os placeholders não devem ser aplicados diretamente.
+OS e Billing têm bancos lógicos/usuários separados na mesma instância RDS; Execução usa MongoDB. Mongo e Rabbit têm uma réplica e PVC: não há alegação de alta disponibilidade ou backup restaurado. O roteiro atual não exige Docker/WSL no PC. SMTP permanece desativado e não foi comprovado. Os arquivos históricos em docs/evidencias não substituem os resultados do CI indicados acima.
